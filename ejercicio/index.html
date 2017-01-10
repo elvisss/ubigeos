@@ -91,10 +91,10 @@
                 success : ValidateTextPlain,
                 error: function() {
                     alert("Error leyendo el archivo.")
+                    $('.error').removeClass('hide');
                 },
                 complete: function() {
                     $('.loading').addClass('hide');
-                    $('.error').removeClass('hide');
                 }
             });
 
@@ -118,7 +118,6 @@
                     $('#distritos tbody').append('<tr><td>' + v.id + '</td><td>' + v.name + '</td><td>' + v.parent.id + '</td><td>' + v.parent.name + '</td></tr>');
                 });
 
-                $('.loading').addClass('hide');
                 $('.wrapper').removeClass('hide');
                 
             }
