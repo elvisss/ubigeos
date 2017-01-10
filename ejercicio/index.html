@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"   content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Ejercicio UI | Belatrix</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap-theme.css">
+    <link href="css/font-awesome.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="error hide">
+            Ocurrió un error
+        </div>
+
+        <div class="loading">
+
+            <i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>
+            <span class="sr-only">Loading...</span>
+
+        </div>
+
+        <div class="wrapper hide">
+
+            <h1>Departamentos</h1>
+
+            <table id="departamentos" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Código Padre</th>
+                        <th>Descripción Padre</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <hr />
+
+            <h1>Provincias</h1>
+
+            <table id="provincias" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Código Padre</th>
+                        <th>Descripción Padre</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <hr />
+
+            <h1>Distritos</h1>
+
+            <table id="distritos" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Código Padre</th>
+                        <th>Descripción Padre</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <hr />
+
+        </div>
+
+    </div>
+
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/bootstrap.js"></script>
+
+    <script type="text/javascript">
+
+        $(function(){
+            $.ajax({
+                url : "plain_text.txt",
+                dataType: "text",
+                success : ValidateTextPlain,
+                error: function() {
+                    alert("Error leyendo el archivo.")
+                },
+                complete: function() {
+                    $('.loading').addClass('hide');
+                    $('.error').removeClass('hide');
+                }
+            });
+
+            function ValidateTextPlain(data) {
+
+                // separar el texto por cada salto de línea
+                var lines = data.split('\n');
+
+                // obtener todos los nombres
+                var names = getNames(lines);
+
+                $.each(names['departamentos'], function (k, v) {
+                    $('#departamentos tbody').append('<tr><td>' + v.id + '</td><td>' + v.name + '</td><td>-</td><td>-</td></tr>');
+                });
+
+                $.each(names['provincias'], function (k, v) {
+                    $('#provincias tbody').append('<tr><td>' + v.id + '</td><td>' + v.name + '</td><td>' + v.parent.id + '</td><td>' + v.parent.name + '</td></tr>');
+                });
+
+                $.each(names['distritos'], function (k, v) {
+                    $('#distritos tbody').append('<tr><td>' + v.id + '</td><td>' + v.name + '</td><td>' + v.parent.id + '</td><td>' + v.parent.name + '</td></tr>');
+                });
+
+                $('.loading').addClass('hide');
+                $('.wrapper').removeClass('hide');
+                
+            }
+
+            function getNames(lines) {
+
+                // arreglos para almacenar los resultados
+                var departamentos = new Array();
+                var provincias = new Array();
+                var distritos = new Array();
+
+                // arreglos para validar los IDs
+                var departamentosID = new Array();
+                var provinciasID = new Array();
+                var distritosID = new Array();
+
+
+                // iterar cada línea obtenida
+                for (var line = 0; line < lines.length; line++) {
+                    // dividir en 3 grupos
+                    var myRegexp = /\“([^\/]+)\/([^\/]+)\/([^\/]+)\”/g;
+                    var match = myRegexp.exec(lines[line]);
+
+                    // validar si hay resultados
+                    if (match) {
+
+                        // iterar sobre los resultados, el índice 0 es el full match
+                        for (var i = 0; i < match.length; i++) {
+                            var couple = match[i].trim();
+                            if (i && couple) {
+                                res = SplitCouple(couple);
+                                // si es departamento
+                                if (i == 1) {
+                                    if (departamentosID.indexOf(res['id']) == -1) {
+                                        departamentosID.push(res['id'])
+                                        departamentos.push(res)
+                                    }
+                                // si es provincia
+                                } else if (i == 2) {
+                                    // índice 1 es de los departamentos
+                                    var parent = SplitCouple(match[1])
+                                    res['parent'] = parent;
+                                    if (provinciasID.indexOf(res['id']) == -1) {
+                                        provinciasID.push(res['id'])
+                                        provincias.push(res)
+                                    }
+                                // si es distrito
+                                } else {
+                                    // índice 2 es de provincias
+                                    var parent = SplitCouple(match[2])
+                                    res['parent'] = parent;
+                                    if (distritosID.indexOf(res['id']) == -1) {
+                                        distritosID.push(res['id'])
+                                        distritos.push(res)
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+                var result = {};
+
+                result['departamentos'] = departamentos;
+                result['provincias'] = provincias;
+                result['distritos'] = distritos;
+
+                console.dir(result)
+
+                return result;
+
+            }
+
+            function SplitCouple(data) {
+                var couple = data;
+                var id = couple.replace(/[^0-9]/g, '').trim();
+                var name = couple.replace(/[^a-zA-Z\s]+/g, '').trim();
+                var res = {
+                    'id': id,
+                    'name': name
+                }
+                return res;
+            }
+
+        });
+    </script>
+
+</body>
+</html>

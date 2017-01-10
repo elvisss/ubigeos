@@ -1,0 +1,17 @@
+body {
+  background-color: #fff;
+}
+
+.loading {
+  min-height: 500px;
+  width: 100%;
+  position: relative;
+}
+
+.loading i {
+  position: absolute;
+  left: 50%;
+  margin-left: -27px;
+  top: 50%;
+  margin-top: -21px;
+}
